@@ -1,6 +1,6 @@
 package com.dbp.backend.Message.application;
 import com.dbp.backend.Message.domain.Message;
-import org.e2e.labe2e02.message.domain.MessageService;
+import com.dbp.backend.Message.domain.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
