@@ -1,8 +1,6 @@
-package com.dbp.backend.auth.config;
-
-
+package com.dbp.backend.auth.config; // Usamos UsuarioDetailsService
 import com.dbp.backend.auth.filter.JwtAuthenticationFilter;
-import com.dbp.backend.auth.service.AppUserDetailsService;
+import com.dbp.backend.auth.service.UsuarioDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,11 +28,11 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
-    private AppUserDetailsService appUserDetailsService;
+    private UsuarioDetailsService usuarioDetailsService;  // Servicio para cargar UsuarioDetails
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder();  // Encriptación de contraseñas con BCrypt
     }
 
     @Bean
@@ -45,16 +43,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/login", "/auth/register/**").permitAll();
-                    auth.requestMatchers(HttpMethod.GET, "/service", "/service/**", "/service/by-tag").permitAll();
-                    auth.requestMatchers(HttpMethod.POST, "/service/{idService}/arrangement").hasRole("CLIENT");
-
-                    auth.requestMatchers(HttpMethod.POST, "/service").hasAnyAuthority("FREELANCER", "ENTERPRISE");
-                    auth.requestMatchers(HttpMethod.GET, "/profile").authenticated();
-                    auth.requestMatchers(HttpMethod.PATCH, "/profile").authenticated();
-                    auth.requestMatchers("/ws/**").authenticated(); // WebSockets requieren autenticación
-                    auth.requestMatchers("/topic/messages").authenticated(); // Mensajes también requieren autenticación
-                    auth.anyRequest().authenticated();
+                    auth.requestMatchers("/auth/login", "/auth/register/**").permitAll();  // Permitir login y registro sin autenticación
+                    auth.requestMatchers(HttpMethod.GET, "/service", "/service/**").permitAll();  // Permitir ciertos GETs sin autenticación
+                    auth.anyRequest().authenticated();  // Resto de las rutas requieren autenticación
                 })
                 .formLogin(AbstractHttpConfigurer::disable) // Desactivar formLogin porque estás usando JWT
                 .logout(logout -> logout.permitAll()) // Permitir que el logout esté disponible
@@ -69,21 +60,21 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(appUserDetailsService); // Usar tu UserDetailsService
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setUserDetailsService(usuarioDetailsService);  // Usamos el servicio UsuarioDetailsService
+        provider.setPasswordEncoder(passwordEncoder());  // Usamos BCrypt para encriptar contraseñas
         return provider;
     }
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                // Disable Cors Origin to React frontend
-                registry.addMapping("/**").allowedOrigins("*")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+                registry.addMapping("/**")  // Permitimos cualquier endpoint
+                        .allowedOrigins("*")  // Permitimos solicitudes desde cualquier origen
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");  // Métodos permitidos
             }
         };
     }
 
 }
-

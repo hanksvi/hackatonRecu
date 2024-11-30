@@ -1,88 +1,67 @@
 package com.dbp.backend.auth.service;
 
+
 import com.dbp.backend.usuario.domain.Usuario;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
-
 
 @Service
 public class JwtService {
-    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
+
     // Clave secreta para firmar los tokens JWT (puedes cambiarla por algo más seguro)
     private static final String SECRET_KEY = Base64.getEncoder().encodeToString(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
-    // Generar el token JWT usando el UserDetails del usuario
+
+    // Genera el token JWT utilizando el email del usuario
     public String generateToken(Usuario usuario) {
-        // Extraemos el email del usuario
-        String username = usuario.getEmail();
+        // Extraemos el email del usuario (ya que no trabajamos con roles)
+        String email = usuario.getEmail();
 
-        // Extraemos el rol (Client, Enterprise, Freelancer)
-        String role = appUser.getRole().name();  // Obtenemos el nombre del rol (CLIENT, ENTERPRISE, FREELANCE)
-
-        // Crear los claims (cualquier información adicional que quieras agregar al token)
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);  // Sin el prefijo ROLE_
-        // Añadir el prefijo ROLE_ al rol
-        // Incluimos el rol en los claims
-
-
-
-        // Crear el token JWT
+        // Crear los claims (si deseas agregar algo más en el futuro, como el nombre completo, por ejemplo)
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)  // El email o nombre de usuario
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // Expira en 10 horas
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .setSubject(email)  // Usamos el email como el subject
+                .setIssuedAt(new Date(System.currentTimeMillis()))  // Hora de emisión
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // Expiración en 10 horas
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)  // Firmamos el token con la clave secreta
                 .compact();
     }
 
-    // Crear el token con claims (opcional) y el subject (que será el nombre de usuario)
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 horas de validez
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)  // Asegúrate que SECRET_KEY no tenga caracteres inválidos
-                .compact();
-    }
-
-    // Validar el token: verificar que el token no esté expirado y que el nombre de usuario coincida
+    // Valida si el token es válido comparando el email extraído del token con el que se pasa como parámetro
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        final String email = extractUsername(token);
+        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    // Extraer el nombre de usuario del token
+    // Extrae el email del token (el "subject")
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Verificar si el token ha expirado
+    // Verifica si el token ha expirado
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // Extraer la fecha de expiración del token
+    // Extrae la fecha de expiración del token
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Extraer cualquier claim del token
+    // Extrae cualquier claim del token
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Extraer todos los claims del token JWT
+    // Extrae todos los claims del token JWT
     private Claims extractAllClaims(String token) {
         return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
     }

@@ -1,21 +1,25 @@
 package com.dbp.backend.auth.filter;
 
-
+import com.dbp.backend.auth.domain.UsuarioDetails;
 import com.dbp.backend.auth.service.JwtService;
 import com.dbp.backend.auth.service.UsuarioDetailsService;
-import com.dbp.backend.usuario.domain.Usuario;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+
 
 import java.io.IOException;
 
@@ -26,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtService jwtService;
 
     @Autowired
-    private UsuarioDetailsService userDetailsService;
+    private UsuarioDetailsService usuarioDetailsService;
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
@@ -36,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authorizationHeader = request.getHeader("Authorization");
 
         String jwt = null;
-        String username = null;
+        String email = null;
 
         logger.info("Request received at JwtAuthenticationFilter: " + request.getRequestURI());
 
@@ -44,9 +48,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7); // Extraer el token
             try {
-                username = jwtService.extractUsername(jwt); // Extraer el nombre de usuario
+                email = jwtService.extractUsername(jwt); // Extraer el email
                 logger.info("JWT Token extracted: {}", jwt);
-                logger.info("Extracted username: {}", username);
+                logger.info("Extracted email: {}", email);
             } catch (Exception e) {
                 logger.error("Error extracting JWT: {}", e.getMessage());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -55,18 +59,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Verificar si el usuario no está autenticado
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            logger.info("Username found in JWT token, proceeding with user authentication");
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            logger.info("Email found in JWT token, proceeding with user authentication");
 
-            // Cargar los detalles del usuario desde UserDetailsService
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // Cargar los detalles del usuario desde UsuarioDetailsService
+            UserDetails userDetails = usuarioDetailsService.loadUserByUsername(email);
 
             // Validar el token
             if (jwtService.validateToken(jwt, userDetails)) {
                 // Crear el objeto de autenticación y establecerlo en el contexto de seguridad
                 var authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                logger.info("User authenticated: {}", username);
+                logger.info("User authenticated: {}", email);
             } else {
                 logger.error("Invalid JWT Token");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
