@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/login", "/auth/register/**").permitAll();  // Permitir login y registro sin autenticación
+                    auth.requestMatchers("/api/login", "/api/register/**").permitAll();  // Permitir login y registro sin autenticación
                     auth.requestMatchers(HttpMethod.GET, "/service", "/service/**").permitAll();  // Permitir ciertos GETs sin autenticación
                     auth.anyRequest().authenticated();  // Resto de las rutas requieren autenticación
                 })
