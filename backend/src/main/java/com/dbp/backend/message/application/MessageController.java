@@ -11,29 +11,5 @@ import java.util.List;
 @RequestMapping("/api/messages")
 public class MessageController {
 
-    @Autowired
-    private MessageService messageService;
 
-    @GetMapping("/{chatID}")
-    public ResponseEntity<List<Message>> getMessages(@PathVariable String chatID) {
-        return ResponseEntity.ok(messageService.getMessagesByChatID(chatID));
-    }
-
-    @PostMapping
-    public ResponseEntity<Message> sendMessage(@RequestBody Message message) {
-        return ResponseEntity.ok(messageService.saveMessage(message));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMessage(@PathVariable String id) {
-        messageService.deleteMessage(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{chatID}/aiModel/{aiModel}")
-    public ResponseEntity<List<Message>> getMessagesForAIModel(
-            @PathVariable String chatID,
-            @PathVariable String aiModel) {
-        return ResponseEntity.ok(messageService.getMessagesForAIModel(chatID, aiModel));
-    }
 }

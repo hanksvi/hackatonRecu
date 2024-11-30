@@ -1,11 +1,13 @@
 package com.dbp.backend.message.domain;
 
+import com.dbp.backend.chat.domain.Chat;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,11 +17,9 @@ import java.time.LocalDateTime;
 public class Message {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
-    @Column(nullable = false)
-    private String chatID;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,13 +35,11 @@ public class Message {
     @Column(nullable = false)
     private AIModel aiModel;
 
-    public Message(String chatID, Sender sender, String content, AIModel aiModel) {
-        this.chatID = chatID;
-        this.sender = sender;
-        this.content = content;
-        this.aiModel = aiModel;
-        this.timestamp = LocalDateTime.now();
-    }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_id", nullable = false) // Aquí se especifica la columna de la base de datos
+    private Chat chat;
+
 }
 
 enum Sender {
