@@ -1,6 +1,6 @@
-package com.dbp.backend.Message.infrastructure;
+package com.dbp.backend.message.infrastructure;
 
-import com.dbp.backend.Message.domain.Message;
+import com.dbp.backend.message.domain.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -25,9 +25,6 @@ public class Chat {
 
     private String chatName;
 
-
-
     private LocalDateTime dateCreation;
-
 
 }

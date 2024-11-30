@@ -1,4 +1,4 @@
-package com.dbp.backend.Message.domain;
+package com.dbp.backend.message.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
